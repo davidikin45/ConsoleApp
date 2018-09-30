@@ -3,10 +3,13 @@ using Hangfire.MemoryStorage;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace ConsoleApp
@@ -20,17 +23,27 @@ namespace ConsoleApp
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public virtual void ConfigureServices(IServiceCollection services)
         {
+            //var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            //services.AddHangfire(config => config.UseSQLiteStorage(connectionString));
             services.AddHangfire(config => config.UseMemoryStorage());
-             //var connectionString = Configuration.GetConnectionString("DefaultConnection");
-             //services.AddHangfire(config => config.UseSQLiteStorage(connectionString));
+
+            services.AddTransient<CheckLinkJob>();
+            services.AddTransient<LinkChecker>();
+
+            var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            services.AddDbContext<LinksContext>(options => options.UseSqlite(connectionString));
+
+            services.Configure<OutputSettings>(Configuration.GetSection("output"));
+            services.Configure<SiteSettings>(Configuration);
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public virtual void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public virtual void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            Logs.Init(loggerFactory, Configuration);
+
+            app.UseHangfireServer();
             app.UseHangfireDashboard("");
         }
     }

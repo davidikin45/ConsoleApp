@@ -11,9 +11,14 @@ namespace ConsoleApp
 {
     public class LinkChecker
     {
-        protected static readonly ILogger<LinkChecker> Logger = Logs.Factory.CreateLogger<LinkChecker>();
+        private ILogger _Logger;
 
-        public static IEnumerable<String> GetLinks(string link, string page)
+        public LinkChecker(ILogger<LinkChecker> logger)
+        {
+            _Logger = logger;
+        }
+
+        public IEnumerable<String> GetLinks(string link, string page)
         {
             var htmlDocument = new HtmlDocument();
             htmlDocument.LoadHtml(page);
@@ -22,10 +27,10 @@ namespace ConsoleApp
                                 .Select(n => n.GetAttributeValue("href", string.Empty))
                                 .ToList();
 
-            using (Logger.BeginScope($"Getting links from {link}"))
+            using (_Logger.BeginScope($"Getting links from {link}"))
             {
                 //Important to use string with placeholder as serilog generates eventId and logging destination can store arguments
-                originalLinks.ForEach(l => Logger.LogTrace(100, "Original link: {link}", l));
+                originalLinks.ForEach(l => _Logger.LogTrace(100, "Original link: {link}", l));
             }
 
             var links = originalLinks
@@ -35,13 +40,13 @@ namespace ConsoleApp
             return links;
         }
 
-        public static IEnumerable<LinkCheckResult> CheckLinks(IEnumerable<String> links)
+        public IEnumerable<LinkCheckResult> CheckLinks(IEnumerable<String> links)
         {
             var all = Task.WhenAll(links.Select(CheckLink));
             return all.Result;
         }
          
-        public async static Task<LinkCheckResult> CheckLink(string link)
+        public async Task<LinkCheckResult> CheckLink(string link)
         {
             var result = new LinkCheckResult();
             result.Link = link;
@@ -58,7 +63,7 @@ namespace ConsoleApp
                 }
                 catch (HttpRequestException exception)
                 {
-                    Logger.LogTrace(0, exception, "Failed to retrieve {link}", link);
+                    _Logger.LogTrace(0, exception, "Failed to retrieve {link}", link);
                     result.Problem = exception.Message;
                     return result;
                 }

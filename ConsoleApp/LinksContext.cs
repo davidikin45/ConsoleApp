@@ -20,22 +20,15 @@ namespace ConsoleApp
         {
 
         }
-
-        public static void Init(DbContextOptions<LinksContext> options)
-        { 
-            using (var context = new LinksContext(options))
-            {
-                context.Database.Migrate();
-            }
-        }
     }
 
     public class LinksContextDesignTimeFactory : IDesignTimeDbContextFactory<LinksContext>
     {
         public LinksContext CreateDbContext(string[] args)
         {
-            var config = new Config(new string[0]);
-            var dbContextOptions = Config.DbContextOptions(config.ConnectionString);
+            var config = Config.Build(args);
+            var connectionString = config.GetConnectionString("DefaultConnection");
+            var dbContextOptions = new DbContextOptionsBuilder<LinksContext>().UseSqlite(connectionString).Options;
             return new LinksContext(dbContextOptions);
         }
     }
