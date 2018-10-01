@@ -52,7 +52,7 @@ namespace ConsoleApp
             //WebHost.CreateDefaultBuilder(args) - https://github.com/aspnet/MetaPackages/blob/release/2.1/src/Microsoft.AspNetCore/WebHost.cs
             //https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host?view=aspnetcore-2.1  
 
-            new WebHostBuilder()
+            new WebHostBuilder() //minimal
               .CaptureStartupErrors(true)
               .UseKestrel((builderContext, options) =>
                {
