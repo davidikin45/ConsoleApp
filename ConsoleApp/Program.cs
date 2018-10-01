@@ -15,7 +15,8 @@ namespace ConsoleApp
         public static int Main(string[] args)
         {
             var config = Config.Build(args);
-            var loggerFactory = Logs.Factory(config);
+            Logs.Init(config);
+            var loggerFactory = Logs.Factory;
             var logger = loggerFactory.CreateLogger<Program>();
 
             try
