@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,7 @@ namespace ConsoleApp
 
             var inMemoryDefaults = new Dictionary<string, string>
             {
+                {WebHostDefaults.EnvironmentKey, "Development" },
                 {"site","https://www.google.com" },
                 {"output:folder", "reports" }, // /output:folder=reports2
                 {"output:file", "links.text" }

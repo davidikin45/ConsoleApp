@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using Hangfire.Common;
 using Hangfire.MemoryStorage;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Builder;
@@ -16,35 +17,39 @@ namespace ConsoleApp
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, ILogger<Startup> logger)
         {
             Configuration = configuration;
+            Logger = logger;
         }
 
+        public ILogger Logger { get; }
         public IConfiguration Configuration { get; }
 
         public virtual void ConfigureServices(IServiceCollection services)
         {
-            //var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            Logger.LogInformation("Configuring Services");
+
+            var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            services.AddDbContext<LinksContext>(options => options.UseSqlite(connectionString));
+
             //services.AddHangfire(config => config.UseSQLiteStorage(connectionString));
             services.AddHangfire(config => config.UseMemoryStorage());
 
             services.AddTransient<CheckLinkJob>();
             services.AddTransient<LinkChecker>();
 
-            var connectionString = Configuration.GetConnectionString("DefaultConnection");
-            services.AddDbContext<LinksContext>(options => options.UseSqlite(connectionString));
-
             services.Configure<OutputSettings>(Configuration.GetSection("output"));
             services.Configure<SiteSettings>(Configuration);
         }
 
-        public virtual void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public virtual void Configure(IApplicationBuilder app, IHostingEnvironment env, IRecurringJobManager recurringJobManager)
         {
-            Logs.Init(loggerFactory, Configuration);
-
             app.UseHangfireServer();
             app.UseHangfireDashboard("");
+
+            recurringJobManager.AddOrUpdate("check-link", Job.FromExpression<CheckLinkJob>(m => m.Execute()), Cron.Minutely(), new RecurringJobOptions());
+            recurringJobManager.Trigger("check-link");
         }
     }
 }
